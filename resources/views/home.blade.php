@@ -8,9 +8,9 @@
 </head>
 <style>
         .auth-button {
-            border: 2px solid #ff66b2; /* Màu hồng cho khung */
+            border: 2px solid #228dff; /* Màu hồng cho khung */
             background-color: white;
-            color: #ff66b2;
+            color: #228dff;
             padding: 10px 20px;
             border-radius: 5px;
             text-decoration: none;
@@ -20,7 +20,7 @@
         }
 
         .auth-button:hover {
-            background-color: #ff66b2;
+            background-color: #228dff;
             color: white;
         }
 
@@ -42,6 +42,136 @@
             max-height: 50px; /* Điều chỉnh chiều cao của logo */
             width: auto; /* Giữ tỉ lệ của logo */
         }
+
+/* Phong cách cho nút dropdown */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    right: 0; /* Đặt menu ở cạnh phải */
+    top: 100%; /* Đặt menu ngay dưới nút */
+    padding: 10px 0;
+    border-radius: 5px;
+}
+
+.dropdown-menu a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.dropdown-menu a:hover {
+    background-color: #ddd;
+}
+
+/* Hiển thị menu khi trỏ chuột vào dropdown */
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+/* Thay đổi màu nút khi menu thả xuống */
+.dropdown:hover .dropdown-toggle {
+    background-color: #228dff;
+    color: white;
+}
+
+.car-scroll-container {
+            display: flex;
+            overflow-x: auto; /* Cho phép cuộn ngang */
+            gap: 15px; /* Khoảng cách giữa các xe */
+            padding: 20px;
+            white-space: nowrap; /* Không ngắt dòng */
+        }
+
+        .car-item {
+            display: inline-block;
+            width: 250px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            text-align: center;
+        }
+
+        .car-item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        .car-item h3 {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+
+        .car-item p {
+            font-size: 1em;
+            color: #555;
+        }
+
+        .car-item button {
+            background-color: #228dff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .car-item button:hover {
+            background-color: #0056b3;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .button-container a {
+            text-decoration: none;
+        }
+
+        .view-all-button {
+            background-color: #228dff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .view-all-button:hover {
+            background-color: #0056b3;
+        }
+
+        .view-more-button {
+    display: inline-block;
+    background-color: #228dff;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.view-more-button:hover {
+    background-color: #0056b3;
+}
+
+
     </style>
 <body>
 
@@ -50,38 +180,51 @@
     <a href="{{ url('/') }}">
             <img src="{{ asset('images/logo.jpg') }}" alt="Logo" class="logo">
         </a>
-    <div class="search-bar">
-        <input type="text" placeholder="Tìm kiếm xe...">
+
+        <div class="auth-buttons">
+        <div class="search-bar">
+    <form action="{{ route('search') }}" method="GET">
+        <input type="text" name="query" placeholder="Tìm kiếm xe...">
         <button type="submit">Tìm kiếm</button>
-    </div>
-    <div class="auth-buttons">
-        @guest
-            <a href="{{ route('login') }}" class="auth-button">Đăng nhập</a>
-            <a href="{{ route('register') }}" class="auth-button">Đăng ký</a>
-        @endguest
-        @auth
-            <a href="#" class="auth-button">Tài khoản</a>
-            <a href="{{ route('logout') }}" class="auth-button"
+    </form>
+</div>
+    @guest
+        <a href="{{ route('login') }}" class="auth-button">Đăng nhập</a>
+        <a href="{{ route('register') }}" class="auth-button">Đăng ký</a>
+    @endguest
+    @auth
+    <div class="dropdown">
+        <a href="#" class="auth-button dropdown-toggle">Tài khoản</a>
+        <div class="dropdown-menu">
+            <a href="{{ route('contact.index') }}">Tổng quan</a>
+            <a href="#">Quản lý tin đăng</a>
+            <a href="#">Gói hội viên</a>
+            <a href="#">Quản lý tin tài trợ</a>
+            <a href="#">Thay đổi thông tin cá nhân</a>
+            <a href="#">Thay đổi mật khẩu</a>
+            <a href="#">Nạp tiền</a>
+            <a href="{{ route('logout') }}" 
                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                 Đăng xuất
             </a>
             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                 @csrf
             </form>
-        @endauth
+        </div>
     </div>
+    @endauth
+</div>
+
+
 </div>
 
 
         <nav class="main-menu">
-            <ul>
-                <!-- Sửa đường dẫn để phù hợp với các route cụ thể -->
-                <li><a href="#">Xe cũ</a></li>
-                <li><a href="#">Giá xe</a></li>
-                <li><a href="#">Tin tức</a></li>
-                <li><a href="{{ route('posts.index') }}">Bài đăng</a></li>
-
-            </ul>
+        <ul>
+    <li><a href="{{ route('cars.index') }}">Xe cũ</a></li>
+    <li><a href="{{ route('news.index') }}">Tin tức</a></li>
+    <li><a href="{{ route('posts.index') }}">Bài đăng</a></li>
+</ul>
 
 <!-- Nút Đăng Tin -->
 @auth
@@ -95,7 +238,9 @@
 @endguest
 
         </nav>
+        </header>
 
+        <main>
         <section class="banner">
             <div class="banner-img">
                 <img src="{{ asset('images/d111.jpg') }}" alt="Banner 1">
@@ -135,39 +280,27 @@
 
         <h1>XE ĐÃ QUA SỬ DỤNG</h1>
         <section class="car-scroll">
-            @php
-                $carNames = [
-                    'Porsche Panamera',
-                    'Honda Civic',
-                    'Mercedes E200',
-                    'VinFast Lux A2.0',
-                    'VinFast Lux SA2.0',
-                    'Hyundai SantaFe',
-                    'Toyota Fortuner',
-                    'Mazda CX-5',
-                    'Ford Ranger',
-                    'Chevrolet Camaro'
-                ];
-            @endphp
-
-            @for ($i = 1; $i <= 10; $i++)
-                <div class="car-item">
-                    <img src="{{ asset('images/c' . $i . '.jpg') }}" alt="{{ $carNames[$i - 1] }}">
-                    <h3>{{ $carNames[$i - 1] }}</h3>
-                    <p>Giá: {{ number_format(rand(500000000, 800000000)) }} VND</p>
-                    <button class="view-more-button">Xem thêm</button>
-                </div>
-            @endfor
+            <div class="car-scroll-container">
+                @foreach ($cars as $car)
+                    <div class="car-item">
+                        <img src="{{ asset($car->image) }}" alt="{{ $car->make }} {{ $car->model }}">
+                        <h3>{{ $car->make }} {{ $car->model }}</h3>
+                        <p>Giá: {{ number_format($car->price, 0, ',', '.') }} VND</p>
+                        <a href="{{ route('posts.byCar', ['car_id' => $car->id]) }}" class="view-more-button">Xem thêm</a>
+                    </div>
+                @endforeach
+            </div>
         </section>
-    </header>
+
+    
 
     <div class="button-container">
         <!-- Sử dụng route nếu có -->
-        <a href="{{ url('/products') }}">
-            <button class="view-all-button">XEM TẤT CẢ</button>
-        </a>
+        <a href="{{ route('cars.index') }}">
+        <button class="view-all-button">XEM TẤT CẢ</button>
+    </a>
     </div>
-
+    </main>
     <footer>
         <div class="footer-container">
             <div class="footer-section">
@@ -207,7 +340,7 @@
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2024 Bán Xe Ô Tô Cũ. All rights reserved. | Designed by Huy Anh</p>
+            <p>&copy; 2024 Bán Xe Ô Tô Cũ. All rights reserved.</p>
         </div>
     </footer>
 

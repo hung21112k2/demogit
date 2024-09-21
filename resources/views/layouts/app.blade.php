@@ -8,9 +8,9 @@
     @vite('resources/css/app.css')
     <style>
         .auth-button {
-            border: 2px solid #ff66b2; /* Màu hồng cho khung */
+            border: 2px solid #228dff; /* Màu hồng cho khung */
             background-color: white;
-            color: #ff66b2;
+            color: #228dff;
             padding: 10px 20px;
             border-radius: 5px;
             text-decoration: none;
@@ -20,7 +20,7 @@
         }
 
         .auth-button:hover {
-            background-color: #ff66b2;
+            background-color: #228dff;
             color: white;
         }
 
@@ -42,6 +42,49 @@
             max-height: 50px; /* Điều chỉnh chiều cao của logo */
             width: auto; /* Giữ tỉ lệ của logo */
         }
+
+        /* Phong cách cho nút dropdown */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    right: 0; /* Đặt menu ở cạnh phải */
+    top: 100%; /* Đặt menu ngay dưới nút */
+    padding: 10px 0;
+    border-radius: 5px;
+}
+
+.dropdown-menu a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.dropdown-menu a:hover {
+    background-color: #ddd;
+}
+
+/* Hiển thị menu khi trỏ chuột vào dropdown */
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+/* Thay đổi màu nút khi menu thả xuống */
+.dropdown:hover .dropdown-toggle {
+    background-color: #228dff;
+    color: white;
+}
     </style>
 </head>
 <body>
@@ -53,21 +96,32 @@
         </a>
             
         <div class="auth-buttons">
-            @guest
-                <a href="{{ route('login') }}" class="auth-button">Đăng nhập</a>
-                <a href="{{ route('register') }}" class="auth-button">Đăng ký</a>
-            @endguest
-            @auth
-                <a href="#" class="auth-button">Tài khoản</a>
-                <a href="{{ route('logout') }}" class="auth-button"
-                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    Đăng xuất
-                </a>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                    @csrf
-                </form>
-            @endauth
+    @guest
+        <a href="{{ route('login') }}" class="auth-button">Đăng nhập</a>
+        <a href="{{ route('register') }}" class="auth-button">Đăng ký</a>
+    @endguest
+    @auth
+    <div class="dropdown">
+        <a href="#" class="auth-button dropdown-toggle">Tài khoản</a>
+        <div class="dropdown-menu">
+            <a href="{{ route('contact.index') }}">Tổng quan</a>
+            <a href="#">Quản lý tin đăng</a>
+            <a href="#">Gói hội viên</a>
+            <a href="#">Quản lý tin tài trợ</a>
+            <a href="#">Thay đổi thông tin cá nhân</a>
+            <a href="#">Thay đổi mật khẩu</a>
+            <a href="#">Nạp tiền</a>
+            <a href="{{ route('logout') }}" 
+               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                Đăng xuất
+            </a>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                @csrf
+            </form>
         </div>
+    </div>
+    @endauth
+</div>
     </div>
     </header>
 
@@ -93,9 +147,11 @@
                 <h3>Liên Kết Nhanh</h3>
                 <ul>
                     <li><a href="{{ url('/') }}">Trang chủ</a></li>
-                    <li><a href="#">Xe cũ</a></li>
-                    <li><a href="#">Giá xe</a></li>
-                    <li><a href="#">Tin tức</a></li>
+                    
+    <li><a href="{{ route('cars.index') }}">Xe cũ</a></li>
+    <li><a href="{{ route('news.index') }}">Tin tức</a></li>
+    <li><a href="{{ route('posts.index') }}">Bài đăng</a></li>
+
                 </ul>
             </div>
             <div class="footer-section">

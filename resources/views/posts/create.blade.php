@@ -12,10 +12,20 @@
         </div>
     @endif
 
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <form action="{{ route('posts.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
-        <!-- Thêm phần chọn Xe từ bảng cars -->
+        <!-- Chọn Xe từ bảng cars -->
         <div class="form-group">
             <label for="car_id">Chọn xe</label>
             <select name="car_id" class="form-control" required>
@@ -25,61 +35,48 @@
             </select>
         </div>
 
-        <!-- Thêm trường chọn Gói -->
+        <!-- Chọn Gói -->
         <div class="form-group">
             <label for="package_id">Chọn gói</label>
             <select name="package_id" class="form-control" required>
                 @foreach ($packages as $package)
-                    <option value="{{ $package->id }}">{{ $package->name }} - Giá: {{ number_format($package->price) }} VND, Số bài đăng: {{ $package->post_limit }}</option>
+                    <option value="{{ $package->id }}">{{ $package->name }} - Giá: {{ number_format($package->price) }} VND</option>
                 @endforeach
             </select>
         </div>
 
+        <!-- Giá xe -->
         <div class="form-group">
             <label for="price">Giá xe</label>
             <input type="number" name="price" class="form-control" required>
         </div>
 
+        <!-- Mô tả -->
         <div class="form-group">
             <label for="description">Mô tả</label>
             <textarea name="description" class="form-control" required></textarea>
         </div>
 
-        <!-- Cho phép người dùng tải lên ảnh -->
+        <!-- Tải ảnh lên -->
         <div class="form-group">
             <label for="image">Tải ảnh lên</label>
-            <input type="file" name="image" class="form-control" required onchange="previewImage(event)">
+            <input type="file" name="image" class="form-control" required>
         </div>
 
-        <!-- Nơi hiển thị hình ảnh preview -->
-        <div class="form-group">
-            <img id="preview" src="#" alt="Hình ảnh" style="display: none; max-width: 200px; margin-top: 10px;">
-        </div>
-
+        <!-- Số km đã đi -->
         <div class="form-group">
             <label for="mileage">Số km đã đi</label>
             <input type="number" name="mileage" class="form-control" required>
         </div>
 
+        <!-- Năm sản xuất -->
         <div class="form-group">
             <label for="year">Năm sản xuất</label>
             <input type="number" name="year" class="form-control" required>
         </div>
 
-        <button type="submit" class="btn btn-primary">Đăng tin</button>
+        <button type="submit" class="btn btn-primary">Đăng tin và Thanh toán</button>
     </form>
 </div>
-
-<script>
-    function previewImage(event) {
-        var reader = new FileReader();
-        reader.onload = function(){
-            var output = document.getElementById('preview');
-            output.src = reader.result;
-            output.style.display = 'block';
-        };
-        reader.readAsDataURL(event.target.files[0]);
-    }
-</script>
 
 @endsection

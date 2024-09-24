@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,28 +9,36 @@ class Post extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
-        'car_id',
-        'package_id',
-        'status',
-        'start_date',
-        'end_date',
-        'price',
-        'description',
+        'user_id', 
+        'car_id', 
+        'package_id', 
+        'price', 
+        'description', 
+        'mileage', 
+        'year', 
         'image_url',
-        'mileage',
-        'year',
+        'start_date', 
+        'end_date', 
+        'status'
     ];
 
-    // Thiết lập quan hệ với bảng cars
+
+    // Liên kết đến model Car (bảng cars)
     public function car()
     {
         return $this->belongsTo(Car::class);
     }
-    
+
+    // Liên kết đến model User (bảng users)
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // Liên kết đến model Package (bảng packages)
     public function package()
     {
         return $this->belongsTo(Package::class);
     }
-    
 }
+

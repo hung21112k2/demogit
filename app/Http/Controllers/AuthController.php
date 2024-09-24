@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Carbon;
 
 class AuthController extends Controller
 {
@@ -18,108 +21,153 @@ class AuthController extends Controller
     }
 
     public function register(Request $request)
+{
+    $request->validate([
+        'username' => 'required|string|max:255|unique:users',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:6|confirmed',
+    ]);
+
+    // Tạo người dùng mới nhưng chưa xác thực email
+    $user = User::create([
+        'username' => $request->username,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'email_verified_at' => null,
+    ]);
+
+    // Gửi email xác thực
+    $this->sendVerificationEmail($user);
+
+    // Chuyển hướng đến trang thông báo đã gửi email xác nhận
+    return redirect()->route('verification.notice');
+}
+
+    // Gửi email xác thực
+    protected function sendVerificationEmail($user)
     {
-        $request->validate([
-            'username' => 'required|string|max:255|unique:users',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify', 
+            Carbon::now()->addMinutes(60), // Liên kết có hiệu lực trong 60 phút
+            ['id' => $user->id, 'hash' => sha1($user->email)]
+        );
+    
+        // Gửi email với biến $user và $url
+        Mail::send('auth.emails.verify', ['url' => $verificationUrl, 'user' => $user], function ($message) use ($user) {
+            $message->to($user->email);
+            $message->subject('Xác nhận tài khoản của bạn');
+        });
+    }
+    
 
-        User::create([
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        return redirect()->route('login')->with('success', 'Đăng ký thành công!');
+    // Hàm xử lý sau khi nhấp vào liên kết xác thực
+    public function verifyEmail(Request $request, $id, $hash)
+    {
+        $user = User::findOrFail($id);
+    
+        // Kiểm tra hash của email
+        if (!hash_equals($hash, sha1($user->email))) {
+            return redirect()->route('login')->withErrors('Liên kết xác thực không hợp lệ.');
+        }
+    
+        // Cập nhật email_verified_at
+        $user->email_verified_at = now();
+        $user->save();
+    
+        // Chuyển hướng đến trang thông báo đăng ký thành công
+        return redirect()->route('verification.success');
     }
 
     public function showLoginForm()
-{
-    return view('auth.login');
-}
+    {
+        return view('auth.login');
+    }
 
-public function login(Request $request)
+    public function login(Request $request)
 {
     $request->validate([
         'email' => 'required|email',
         'password' => 'required',
     ]);
 
-    if (auth()->attempt($request->only('email', 'password'))) {
-        return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
+    $credentials = $request->only('email', 'password');
+
+    if (Auth::attempt($credentials)) {
+        $user = auth()->user();
+
+        // Kiểm tra nếu người dùng là admin
+        if ($user->role === 'admin') {
+            // Chuyển hướng đến trang admin dashboard
+            return redirect()->route('admin.dashboard')->with('success', 'Đăng nhập thành công! Chào mừng Admin.');
+        } else {
+            // Nếu không phải admin, chuyển đến trang người dùng bình thường
+            return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
+        }
     }
 
+    // Trường hợp đăng nhập thất bại
     return back()->withErrors(['email' => 'Email hoặc mật khẩu không đúng.']);
 }
-
-public function logout()
-{
-    auth()->logout();
-    return redirect()->route('home');
-}
-
-public function showForgotPasswordForm()
-{
-    return view('auth.forgot-password');
-}
-
-public function sendResetLink(Request $request)
-{
-    // Xác thực email
-    $request->validate(['email' => 'required|email']);
-
-    // Tạo token đặt lại mật khẩu
-    $token = Str::random(60);
-
-    // Lưu token vào bảng password_resets
-    DB::table('password_resets')->insert([
-        'email' => $request->email,
-        'token' => $token,
-        'created_at' => now(),
-    ]);
-
-    // Gửi email với token đặt lại mật khẩu
-    Mail::send('auth.emails.reset', ['token' => $token], function ($message) use ($request) {
-        $message->to($request->email);
-        $message->subject('Đặt lại mật khẩu');
-    });
-
-    return back()->with('success', 'Liên kết đặt lại mật khẩu đã được gửi.');
-}
-
-public function showResetPasswordForm($token)
-{
-    return view('auth.reset-password', ['token' => $token]);
-}
-
-public function resetPassword(Request $request)
-{
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required|string|min:6|confirmed',
-        'token' => 'required',
-    ]);
-
-    // Xác thực token
-    $reset = DB::table('password_resets')
-                ->where('email', $request->email)
-                ->where('token', $request->token)
-                ->first();
-
-    if (!$reset) {
-        return back()->withErrors(['email' => 'Token không hợp lệ.']);
+    public function logout()
+    {
+        auth()->logout();
+        return redirect()->route('home');
     }
 
-    // Cập nhật mật khẩu người dùng
-    $user = User::where('email', $request->email)->first();
-    $user->password = Hash::make($request->password);
-    $user->save();
+    public function showForgotPasswordForm()
+    {
+        return view('auth.forgot-password');
+    }
 
-    // Xóa token sau khi sử dụng
-    DB::table('password_resets')->where('email', $request->email)->delete();
+    public function sendResetLink(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+        $token = Str::random(60);
 
-    return redirect()->route('login')->with('success', 'Mật khẩu của bạn đã được cập nhật.');
-}
+        DB::table('password_resets')->insert([
+            'email' => $request->email,
+            'token' => $token,
+            'created_at' => now(),
+        ]);
 
+        Mail::send('auth.emails.reset', ['token' => $token], function ($message) use ($request) {
+            $message->to($request->email);
+            $message->subject('Đặt lại mật khẩu');
+        });
+
+        return back()->with('success', 'Liên kết đặt lại mật khẩu đã được gửi.');
+    }
+
+    public function showResetPasswordForm($token)
+    {
+        return view('auth.reset-password', ['token' => $token]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:6|confirmed',
+            'token' => 'required',
+        ]);
+
+        $reset = DB::table('password_resets')
+                    ->where('email', $request->email)
+                    ->where('token', $request->token)
+                    ->first();
+
+        if (!$reset) {
+            return back()->withErrors(['email' => 'Token không hợp lệ.']);
+        }
+
+        $user = User::where('email', $request->email)->first();
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        DB::table('password_resets')->where('email', $request->email)->delete();
+
+        return redirect()->route('login')->with('success', 'Mật khẩu của bạn đã được cập nhật.');
+    }
+    // google auth
+    
 }

@@ -13,6 +13,7 @@ class Car extends Model
         'user_id',
         'make',
         'model',
+        'image',
     ];
 
     // Thiết lập quan hệ với bảng posts

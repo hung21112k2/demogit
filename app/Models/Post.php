@@ -40,5 +40,12 @@ class Post extends Model
     {
         return $this->belongsTo(Package::class);
     }
+
+
+
+public function photos()
+{
+    return $this->hasMany(Photo::class, 'post_id');
+}
 }
 

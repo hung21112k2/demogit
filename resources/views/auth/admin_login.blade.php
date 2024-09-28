@@ -1,3 +1,4 @@
+<!-- resources/views/auth/admin_login.blade.php -->
 @extends('layouts.app')
 
 @section('title', 'Đăng nhập Admin')
@@ -11,7 +12,7 @@
                     <h3>Đăng nhập Admin</h3>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('admin.login') }}">
+                    <form method="POST" action="{{ route('admin.login.submit') }}">
                         @csrf
                         <div class="form-group">
                             <label for="email">Địa chỉ email</label>
@@ -35,7 +36,7 @@
                             <input type="checkbox" class="form-check-input" id="remember" name="remember" {{ old('remember') ? 'checked' : '' }}>
                             <label class="form-check-label" for="remember">Ghi nhớ đăng nhập</label>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-block">Đăng nhập Admin</button>
+                        <button type="submit" class="btn btn-primary btn-block">Đăng nhập</button>
                     </form>
                 </div>
             </div>

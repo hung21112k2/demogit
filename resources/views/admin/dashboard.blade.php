@@ -173,11 +173,16 @@ footer {
     text-decoration: underline;
 }
         </style>
+
+
     <div class="admin-header">
         <h1>Admin Dashboard</h1>
     </div>
 
     <div class="admin-sidebar">
+    <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
+    @csrf
+</form>
         <ul>
         <li><a href="{{ route('admin.users') }}">Thống kê người dùng</a></li>
         <li><a href="{{ route('admin.cars') }}">Quản lý sản phẩm</a></li>
@@ -185,7 +190,9 @@ footer {
         <li><a href="{{ route('admin.posts') }}">Quản lý bài đăng</a></li>
 
         <li><a href="{{ route('admin.packages') }}">Quản lý các gói dịch vụ</a></li>
-            <li><a href="{{ url('/login') }}">Đăng xuất</a></li>
+        <li>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Đăng xuất</a>
+    </li>
         </ul>
     </div>
 

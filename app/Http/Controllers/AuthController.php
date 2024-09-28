@@ -84,6 +84,38 @@ class AuthController extends Controller
     }
 
     public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+    
+        $credentials = $request->only('email', 'password');
+    
+        if (Auth::attempt($credentials)) {
+            $user = auth()->user();
+    
+            // Kiểm tra nếu người dùng là admin và đang cố gắng đăng nhập qua form user
+            if ($user->role === 'admin') {
+                Auth::logout(); // Đăng xuất tài khoản admin
+                return redirect()->route('admin.login')->withErrors(['email' => 'Tài khoản này là admin. Vui lòng đăng nhập qua trang đăng nhập Admin.']);
+            }
+    
+            // Nếu không phải admin, tiếp tục đăng nhập user
+            return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
+        }
+    
+        // Trường hợp đăng nhập thất bại
+        return back()->withErrors(['email' => 'Email hoặc mật khẩu không đúng.']);
+    }
+    
+
+public function showAdminLoginForm()
+{
+    return view('auth.admin_login');
+}
+
+public function adminLogin(Request $request)
 {
     $request->validate([
         'email' => 'required|email',
@@ -92,27 +124,30 @@ class AuthController extends Controller
 
     $credentials = $request->only('email', 'password');
 
-    if (Auth::attempt($credentials)) {
-        $user = auth()->user();
-
-        // Kiểm tra nếu người dùng là admin
-        if ($user->role === 'admin') {
-            // Chuyển hướng đến trang admin dashboard
-            return redirect()->route('admin.dashboard')->with('success', 'Đăng nhập thành công! Chào mừng Admin.');
-        } else {
-            // Nếu không phải admin, chuyển đến trang người dùng bình thường
-            return redirect()->route('home')->with('success', 'Đăng nhập thành công!');
-        }
+    // Thực hiện đăng nhập cho admin
+    if (Auth::attempt(array_merge($credentials, ['role' => 'admin']), $request->remember)) {
+        return redirect()->route('admin.dashboard')->with('success', 'Đăng nhập thành công! Chào mừng Admin.');
     }
 
-    // Trường hợp đăng nhập thất bại
-    return back()->withErrors(['email' => 'Email hoặc mật khẩu không đúng.']);
+    // Nếu không phải admin hoặc thông tin đăng nhập sai
+    return back()->withErrors(['email' => 'Email hoặc mật khẩu không đúng hoặc không phải tài khoản admin.']);
 }
+
     public function logout()
     {
         auth()->logout();
         return redirect()->route('home');
     }
+
+    public function adminlogout(Request $request)
+{
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect()->route('home'); // Điều hướng người dùng về trang chủ hoặc trang đăng nhập sau khi đăng xuất
+}
+
 
     public function showForgotPasswordForm()
     {

@@ -81,12 +81,16 @@
 </head>
 <body>
     <div class="admin-sidebar">
+    <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
+    @csrf
+</form>
         <ul>
             <li><a href="{{ route('admin.dashboard') }}" class="active"><i class="fas fa-home"></i> Trang chủ</a></li>
             <li><a href="{{ route('admin.users') }}"><i class="fas fa-users"></i> Quản lý người dùng</a></li>
             <li><a href="{{ route('admin.cars') }}"><i class="fas fa-box"></i> Quản lý sản phẩm</a></li>
-            <li><a href="{{ route('admin.posts') }}"><i class="fas fa-car"></i>Quản lý bài đăng</a></li>
-            <li><a href="{{ url('/login') }}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+            <li><a href="{{ route('admin.posts.index') }}"><i class="fas fa-car"></i>Quản lý bài đăng</a></li>
+            <li><a href="{{ route('admin.packages') }}">Quản lý các gói dịch vụ</a></li>
+            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Đăng xuất</a>
         </ul>
     </div>
 

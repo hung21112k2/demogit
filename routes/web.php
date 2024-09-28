@@ -10,20 +10,19 @@ use App\Http\Middleware\IsAdmin;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PackageController;
-
-
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\TransactionController;
 
 // Trang chủ
-Route::get('/', function () {
-    $cars = Car::take(10)->get();
-    return view('home', compact('cars'));
-})->name('home');
+Route::get('/', [PostController::class, 'homeindex'])->name('home');
 
-// Đăng nhập
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+// Đăng nhập user
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+
+// Đăng nhập admin
+Route::get('/admin/login', [AuthController::class, 'showAdminLoginForm'])->name('admin.login');
+Route::post('/admin/login', [AuthController::class, 'adminLogin'])->name('admin.login.submit');
 
 // Đăng ký
 Route::get('/register', function () {
@@ -33,6 +32,9 @@ Route::post('/register', [AuthController::class, 'register']);
 
 // Đăng xuất
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::post('/admin/logout', [AuthController::class, 'adminlogout'])->name('admin.logout');
+
 
 
 // Quên mật khẩu
@@ -116,6 +118,68 @@ Route::post('/admin/packages', [PackageController::class, 'store'])->name('admin
 Route::get('/admin/packages/{package}/edit', [PackageController::class, 'edit'])->name('admin.packages.edit');
 Route::put('/admin/packages/{package}', [PackageController::class, 'update'])->name('admin.packages.update');
 Route::delete('/admin/packages/{package}', [PackageController::class, 'destroy'])->name('admin.packages.destroy');
+
+
+
+Route::get('/posts/user/{user_id}', [PostController::class, 'showByUser'])->name('posts.byUser');
+
+Route::get('/packages', [PackageController::class, 'userindex'])->name('packages.index');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/payment', [PaymentController::class, 'showForm'])->name('payment.form');
+    Route::post('/payment/process', [PaymentController::class, 'processPayment'])->name('payment.process');
+
+Route::get('/payment/return', [PaymentController::class, 'paymentReturn'])->name('payment.return');
+
+Route::get('/payment/success', [PaymentController::class, 'paymentSuccess'])->name('payment.success');
+
+Route::get('/payment/failed', function () {
+    return view('payment.failed');
+})->name('payment.failed');
+
+});
+
+Route::post('/posts/{post}/pay', [PostController::class, 'payToViewContact'])->name('payToViewContact');
+
+Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
+
+Route::post('/packages/purchase', [PackageController::class, 'purchase'])->name('packages.purchase');
+Route::get('/packages/purchase', [PackageController::class, 'showPurchasePage'])->name('packages.purchase');
+
+
+Route::prefix('admin')->middleware('auth')->group(function () {
+    Route::get('/posts', [PostController::class, 'index'])->name('admin.posts.index');
+    
+    Route::get('/posts/{post}/approve', [PostController::class, 'showForApproval'])->name('admin.posts.showForApproval');
+    Route::post('/admin/posts/{post}/approve', [PostController::class, 'approvePost'])->name('admin.posts.approve');
+Route::post('/admin/posts/{post}/reject', [PostController::class, 'rejectPost'])->name('admin.posts.reject');
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

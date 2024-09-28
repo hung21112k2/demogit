@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -18,7 +19,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array<int, string>
      */
     protected $fillable = [
-        'username', 'email', 'password', 'phone', 'balance', 'email_verified_at',
+        'id', 'username', 'email', 'password', 'phone', 'balance', 'email_verified_at',
     ];
 
     public function isAdmin()
@@ -48,4 +49,13 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
         ];
     }
+
+    public function packages(): BelongsToMany
+    {
+        return $this->belongsToMany(Package::class, 'package_user', 'user_id', 'package_id')
+                    ->withPivot('expires_at')
+                    ->withTimestamps();
+    }
+
+    
 }

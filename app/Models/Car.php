@@ -7,18 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Car extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
-        'user_id',
         'make',
         'model',
-        'image',
+        'image_url',  // Đã thay đổi thành image_url
     ];
 
-    // Thiết lập quan hệ với bảng posts
     public function posts()
     {
         return $this->hasMany(Post::class);
     }
 }
+

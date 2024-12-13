@@ -81,9 +81,14 @@ class PackageController extends Controller
          $package = Package::find($request->package_id);
          $user = auth()->user();
      
+         // Kiểm tra nếu không tìm thấy gói
+         if (!$package) {
+             return redirect()->route('packages.index')->with('error', 'Gói dịch vụ không tồn tại.');
+         }
+     
          // Kiểm tra số dư của người dùng
          if ($user->balance < $package->price) {
-             return redirect()->route('packages.purchase')->with('error', 'Số dư của bạn không đủ để mua gói này.');
+             return redirect()->route('packages.index')->with('error', 'Số dư của bạn không đủ để mua gói này.');
          }
      
          // Trừ tiền từ balance
@@ -122,6 +127,7 @@ class PackageController extends Controller
      
          return redirect()->route('posts.create')->with('success', 'Bạn đã mua gói thành công!');
      }
+     
      
 
      public function showPurchasePage()

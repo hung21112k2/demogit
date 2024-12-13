@@ -138,12 +138,32 @@
         flex-wrap: wrap;
     }
 
+    .image-preview-item {
+        position: relative;
+    }
+
     .image-preview img {
         width: 100px;
         height: 100px;
         object-fit: cover;
         border: 1px solid #ddd;
         border-radius: 5px;
+    }
+
+    .delete-image {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background-color: #ff0000;
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 16px;
+        text-align: center;
     }
 
     /* Mobile responsiveness */
@@ -203,14 +223,42 @@
         <form action="{{ route('posts.store') }}" method="POST" enctype="multipart/form-data" id="post-form">
             @csrf
 
-            <!-- Chọn Xe từ bảng cars -->
+            <!-- Chọn hãng xe -->
             <div class="form-group">
-                <label for="car_id">Chọn xe</label>
-                <select name="car_id" class="form-control" required>
-                    @foreach ($cars as $car)
-                        <option value="{{ $car->id }}">{{ $car->make }} {{ $car->model }}</option>
+                <label for="make">Chọn hãng xe</label>
+                <select name="make" id="make" class="form-control" required>
+                    <option value="">Chọn hãng xe...</option>
+                    @foreach ($makes as $make)
+                        <option value="{{ $make }}">{{ $make }}</option>
                     @endforeach
+                    <option value="other">Khác</option>
                 </select>
+            </div>
+
+            <!-- Nhập hãng xe khác -->
+            <div id="other-make-field" style="display: none;">
+                <div class="form-group">
+                    <label for="other_make">Hãng xe khác:</label>
+                    <input type="text" name="other_make" id="other_make" class="form-control">
+                </div>
+            </div>
+
+            <!-- Chọn model xe -->
+            <div class="form-group">
+                <label for="model">Chọn model xe</label>
+                <select name="model" id="model" class="form-control" required>
+                    <option value="">Chọn model...</option>
+                    <option value="other">Khác</option>
+                    <!-- Options for model will be dynamically populated based on selected make -->
+                </select>
+            </div>
+
+            <!-- Nhập model xe khác -->
+            <div id="other-model-field" style="display: none;">
+                <div class="form-group">
+                    <label for="other_model">Model xe khác:</label>
+                    <input type="text" name="other_model" id="other_model" class="form-control">
+                </div>
             </div>
 
             <!-- Chọn Gói từ package_user -->
@@ -219,8 +267,8 @@
                 <select name="package_id" id="package_id" class="form-control" required>
                     <option value="">Chọn gói...</option>
                     @foreach ($packages as $package)
-                        <option value="{{ $package->id }}" 
-                            data-duration="{{ $package->duration }}" 
+                        <option value="{{ $package->id }}"
+                            data-duration="{{ $package->duration }}"
                             data-post-limit="{{ $package->remaining_posts }}">
                             {{ $package->name }} - Số bài đăng còn lại: {{ $package->remaining_posts }}
                         </option>
@@ -265,7 +313,9 @@
                 <input type="text" id="mileage" name="mileage" class="form-control" required>
             </div>
 
-            <label for="year">Năm sản xuất</label>
+            <!-- Năm sản xuất -->
+            <div class="form-group">
+                <label for="year">Năm sản xuất</label>
                 <input type="number" name="year" class="form-control" required>
             </div>
 
@@ -274,9 +324,12 @@
     @endif
 </div>
 
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    var makeSelect = document.getElementById('make');
+    var otherMakeField = document.getElementById('other-make-field');
+    var modelSelect = document.getElementById('model');
+    var otherModelField = document.getElementById('other-model-field');
     var imagePreview = document.getElementById('image-preview');
     var imageContainer = document.getElementById('image-container');
     var imageInputTemplate = document.createElement('div'); // Tạo template cho trường nhập ảnh
@@ -287,6 +340,57 @@ document.addEventListener('DOMContentLoaded', function () {
     `;
 
     var allSelectedFiles = []; // Biến lưu trữ tất cả các ảnh đã chọn
+
+    // Dữ liệu mẫu cho các hãng xe và model
+    var carData = @json($cars);
+
+    makeSelect.addEventListener('change', function () {
+        if (makeSelect.value === 'other') {
+            otherMakeField.style.display = 'block';
+            document.getElementById('other_make').required = true;
+            modelSelect.innerHTML = '<option value="other">Khác</option>';
+            modelSelect.value = 'other';
+            otherModelField.style.display = 'block';
+            document.getElementById('other_model').required = true;
+        } else {
+            otherMakeField.style.display = 'none';
+            document.getElementById('other_make').required = false;
+            updateModelOptions();
+        }
+    });
+
+    modelSelect.addEventListener('change', function () {
+        if (modelSelect.value === 'other') {
+            otherModelField.style.display = 'block';
+            document.getElementById('other_model').required = true;
+        } else {
+            otherModelField.style.display = 'none';
+            document.getElementById('other_model').required = false;
+        }
+    });
+
+    function updateModelOptions() {
+        var selectedMake = makeSelect.value;
+        modelSelect.innerHTML = '<option value="">Chọn model...</option>'; // Reset model options
+
+        if (selectedMake !== 'other') {
+            var filteredModels = carData.filter(function(car) {
+                return car.make === selectedMake;
+            });
+
+            filteredModels.forEach(function(car) {
+                var option = document.createElement('option');
+                option.value = car.model;
+                option.textContent = car.model;
+                modelSelect.appendChild(option);
+            });
+
+            var otherOption = document.createElement('option');
+            otherOption.value = 'other';
+            otherOption.textContent = 'Khác';
+            modelSelect.appendChild(otherOption);
+        }
+    }
 
     function createImageInput() {
         var newImageInput = imageInputTemplate.cloneNode(true);
@@ -311,32 +415,86 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Hiển thị các file vừa chọn ngay lập tức
         updateImagePreview();
-
-        // Sau khi chọn ảnh đầu tiên, tạo trường nhập ảnh mới nếu cần
-        if (imageInput === imageContainer.lastChild) {
-            createImageInput(); // Tạo trường tải ảnh mới sau khi đã chọn ảnh
-        }
     }
 
     function updateImagePreview() {
         imagePreview.innerHTML = ''; // Xóa toàn bộ preview cũ
 
         // Hiển thị toàn bộ các ảnh trong danh sách allSelectedFiles
-        allSelectedFiles.forEach(function(file) {
+        allSelectedFiles.forEach(function(file, index) {
             var reader = new FileReader();
             reader.onload = function(e) {
+                var previewItem = document.createElement('div');
+                previewItem.classList.add('image-preview-item');
+
                 var img = document.createElement('img');
                 img.src = e.target.result;
-                imagePreview.appendChild(img);
+                previewItem.appendChild(img);
+
+                var deleteButton = document.createElement('button');
+                deleteButton.classList.add('delete-image');
+                deleteButton.textContent = 'X';
+                deleteButton.addEventListener('click', function() {
+                    allSelectedFiles.splice(index, 1);
+                    updateImagePreview();
+                });
+                previewItem.appendChild(deleteButton);
+
+                imagePreview.appendChild(previewItem);
             };
             reader.readAsDataURL(file);
         });
+
+        // Cập nhật lại các trường input[type="file"] với danh sách tệp hiện tại
+        updateFileInputs();
+    }
+
+    function updateFileInputs() {
+        // Xóa tất cả các trường nhập file hiện có
+        imageContainer.innerHTML = '';
+
+        // Tạo lại trường nhập file và đặt các tệp đã chọn vào
+        allSelectedFiles.forEach(function(file) {
+            var newImageInput = imageInputTemplate.cloneNode(true);
+            var input = newImageInput.querySelector('input');
+
+            // Tạo một đối tượng DataTransfer để thêm tệp vào trường nhập file
+            var dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            input.files = dataTransfer.files;
+
+            imageContainer.appendChild(newImageInput);
+        });
+
+        // Thêm trường nhập file trống để có thể chọn thêm ảnh mới
+        createImageInput();
     }
 
     // Khởi tạo chỉ một trường nhập ảnh đầu tiên khi trang được tải
     createImageInput();
+
+    // Định dạng số thành dạng có dấu chấm sau mỗi 3 chữ số
+    var priceInput = document.getElementById('price');
+    var mileageInput = document.getElementById('mileage');
+
+    function formatNumberInput(input) {
+        input.addEventListener('input', function () {
+            // Lấy giá trị của input và loại bỏ tất cả các dấu chấm cũ
+            var value = input.value.replace(/\./g, '');
+
+            // Định dạng lại giá trị với dấu chấm sau mỗi 3 chữ số
+            var formattedValue = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+            // Gán lại giá trị cho input
+            input.value = formattedValue;
+        });
+    }
+
+    // Áp dụng định dạng cho các trường nhập
+    formatNumberInput(priceInput);
+    formatNumberInput(mileageInput);
 });
+
 </script>
 
 @endsection
-

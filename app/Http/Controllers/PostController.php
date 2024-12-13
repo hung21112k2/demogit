@@ -20,30 +20,57 @@ class PostController extends Controller
         $this->middleware('auth')->only(['create', 'store', 'myPosts']);
     }
 
-    // Phương thức tạo bài đăng mới
     public function create()
     {
         $user = auth()->user();  // Lấy thông tin người dùng đang đăng nhập
-        $packages = DB::table('packages')
-        ->join('package_user', 'packages.id', '=', 'package_user.package_id')
-        ->where('package_user.user_id', $user->id)
-        ->select('packages.*', 'package_user.remaining_posts')
-        ->get();
+        
+        // Lấy tất cả các gói từ bảng packages
+        $packages = Package::all();
+    
+        // Lấy thông tin lượt đăng bài còn lại của các gói mà người dùng đã mua
+        $userPackages = DB::table('package_user')
+            ->where('user_id', $user->id)
+            ->pluck('remaining_posts', 'package_id')
+            ->toArray();
+    
+        // Gắn số lượt đăng bài còn lại vào từng gói
+        foreach ($packages as $package) {
+            // Nếu không có lượt đăng bài, đặt remaining_posts là 0
+            $package->remaining_posts = $userPackages[$package->id] ?? 0;
+        }
+        
+        // Lấy danh sách các hãng xe duy nhất từ bảng cars
+        $makes = Car::distinct()->pluck('make');
+        
+        // Lấy danh sách tất cả các xe
         $cars = Car::all();
-        return view('posts.create', compact('user','packages', 'cars'));
+        
+        return view('posts.create', compact('user', 'packages', 'cars', 'makes'));
     }
+    
+    
+    
 
     public function store(Request $request)
     {
+        // Xử lý trước giá trị của 'price' và 'mileage' để loại bỏ các ký tự không phải số
+        $request->merge([
+            'price' => str_replace('.', '', $request->price),
+            'mileage' => str_replace('.', '', $request->mileage),
+        ]);
+    
         // Validate dữ liệu từ form
         $validated = $request->validate([
-            'car_id' => 'required|integer',
+            'make' => 'required|string',
+            'model' => 'required|string',
             'package_id' => 'required|integer',
             'price' => 'required|numeric',
             'description' => 'required|string',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048', // validate for multiple images
+            'images.*' => 'file|mimetypes:image/*|max:2048', // Cho phép bất kỳ loại MIME nào của hình ảnh
             'mileage' => 'required|integer',
             'year' => 'required|integer',
+            'other_make' => 'nullable|string',
+            'other_model' => 'nullable|string',
         ]);
     
         $user = auth()->user();
@@ -69,6 +96,16 @@ class PostController extends Controller
                 'updated_at' => now(),
             ]);
     
+        // Xử lý hãng xe khác
+        if ($validated['make'] === 'other' && !empty($validated['other_make'])) {
+            $validated['make'] = $validated['other_make'];
+        }
+    
+        // Xử lý model xe khác
+        if ($validated['model'] === 'other' && !empty($validated['other_model'])) {
+            $validated['model'] = $validated['other_model'];
+        }
+    
         // Tạo bài đăng với trạng thái 'pending' (chờ admin phê duyệt)
         $startDate = Carbon::now();
         $endDate = $startDate->copy()->addDays($package->duration);
@@ -76,7 +113,7 @@ class PostController extends Controller
         // Tạo bài đăng trong bảng posts với trạng thái 'pending'
         $post = Post::create([
             'user_id' => $user->id,
-            'car_id' => $validated['car_id'],
+            'car_id' => null, // Để tạm null cho đến khi admin duyệt
             'package_id' => $package->id,
             'price' => $validated['price'],
             'description' => $validated['description'],
@@ -84,7 +121,16 @@ class PostController extends Controller
             'year' => $validated['year'],
             'start_date' => $startDate,
             'end_date' => $endDate,
-            'status' => 'pending',  // Trạng thái chờ phê duyệt
+            'status' => 'pending', // Trạng thái chờ phê duyệt
+        ]);
+    
+        // Lưu thông tin xe tạm thời vào bảng pending_cars
+        DB::table('pending_cars')->insert([
+            'post_id' => $post->id,
+            'make' => $validated['make'],
+            'model' => $validated['model'],
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     
         // Lưu từng ảnh vào bảng photos
@@ -111,55 +157,115 @@ class PostController extends Controller
         return redirect()->route('posts.create')->with('success', 'Bài đăng của bạn đã được gửi và đang chờ admin phê duyệt.');
     }
     
+
+public function index(Request $request)
+{
+    // Lấy danh sách các hãng xe
+    $makes = Car::select('make')->distinct()->pluck('make');
     
-    
-    
-    public function index(Request $request)
-    {
-        // Lấy danh sách các hãng xe
-        $makes = Car::select('make')->distinct()->pluck('make');
-        
-        // Lấy tất cả các bài đăng có trạng thái active
+    // Kiểm tra nếu người dùng đã đăng nhập và là admin
+    if (auth()->check() && auth()->user()->role === 'admin') {
+        // Lấy tất cả các bài đăng active (không phân trang cho admin)
         $posts = Post::with('car')
-                     ->where('end_date', '>=', Carbon::now())
-                     ->where('status', 'active')
-                     ->get();
+            ->where('end_date', '>=', Carbon::now())
+            ->where('status', 'active')
+            ->get(); // Không phân trang
+        
+        // Đánh dấu bài đăng sắp hết hạn (còn 5 ngày hoặc ít hơn)
+        foreach ($posts as $post) {
+            $daysLeft = Carbon::now()->diffInDays(Carbon::parse($post->end_date), false);
+            
+            // Đặt cờ isExpiringSoon nếu còn 5 ngày hoặc ít hơn và còn hạn
+            $post->isExpiringSoon = $daysLeft > 0 && $daysLeft <= 5;
+        
+            // Debug: Hiển thị số ngày còn lại để kiểm tra (có thể bỏ đi sau khi kiểm tra)
+            logger("Post ID: {$post->id}, Days Left: {$daysLeft}, Is Expiring Soon: {$post->isExpiringSoon}");
+        }
+        
+        
         
         // Lấy các bài đăng chờ phê duyệt
         $pendingPosts = Post::with('car', 'user', 'package')
-                            ->where('status', 'pending')
-                            ->get();
+            ->where('status', 'pending')
+            ->get();
+
+        // Lấy các bài đăng bị từ chối
+        $rejectedPosts = Post::with('car', 'user', 'package')
+            ->where('status', 'rejected')
+            ->get();
         
         // Trả về view admin.posts.index nếu là admin
-        if (auth()->user()->role === 'admin') {
-            return view('admin.posts.index', compact('posts', 'pendingPosts', 'makes'));
-        } else {
-            // Nếu không phải admin, chỉ trả về view posts.index
-            return view('posts.index', compact('posts', 'makes'));
+        return view('admin.posts.index', compact('posts', 'pendingPosts', 'rejectedPosts', 'makes'));
+    } else {
+        // Tạo query cơ bản cho các bài đăng
+        $query = Post::with('car')
+            ->where('end_date', '>=', Carbon::now())
+            ->where('status', 'active');
+
+        // Filter by car make
+        if ($request->has('make') && $request->make) {
+            $query->whereHas('car', function ($q) use ($request) {
+                $q->where('make', $request->make);
+            });
         }
+
+        // Filter by year
+        if ($request->has('year') && $request->year) {
+            $query->whereHas('car', function ($q) use ($request) {
+                $q->where('year', $request->year);
+            });
+        }
+
+        // Filter by price range
+        if ($request->has('price_min') || $request->has('price_max')) {
+            $minPrice = $request->price_min ?? 0;
+            $maxPrice = $request->price_max ?? 2000000000;
+            $query->whereBetween('price', [$minPrice, $maxPrice]);
+        }
+
+        // Thực thi query và phân trang cho người dùng thông thường
+        $posts = $query->paginate(6); // 6 bài đăng mỗi trang
+
+        // Trả về view posts.index cho người dùng thông thường và khách
+        return view('posts.index', compact('posts', 'makes'));
     }
+}
+
+
     
     
-    public function approvePost(Request $request, $post_id)
-    {
-        $post = Post::findOrFail($post_id);
-    
-        // Kiểm tra tiêu chí phê duyệt
-        $validated = $request->validate([
-            'criteria_image' => 'required',
-            'criteria_price' => 'required',
-            'criteria_description' => 'required',
-        ]);
-    
-        // Cập nhật trạng thái bài đăng
-        $post->status = 'active';
-        $post->save();
-    
-        // Gửi email thông báo phê duyệt
-        $post->user->notify(new PostApproved($post));
-    
-        return redirect()->route('admin.posts.index')->with('success', 'Bài đăng đã được phê duyệt.');
-    }
+
+public function approvePost(Request $request, $post_id)
+{
+    $post = Post::findOrFail($post_id);
+
+    // Kiểm tra tiêu chí phê duyệt
+    $validated = $request->validate([
+        'criteria_image' => 'required',
+        'criteria_price' => 'required',
+        'criteria_description' => 'required',
+    ]);
+
+    // Tạo xe mới trong bảng cars
+    $pendingCar = DB::table('pending_cars')->where('post_id', $post->id)->first();
+    $car = Car::create([
+        'make' => $pendingCar->make,
+        'model' => $pendingCar->model,
+        'image_url' => $post->image_url, // hoặc giá trị phù hợp khác
+    ]);
+
+    // Cập nhật 'car_id' của bài đăng
+    $post->car_id = $car->id;
+    $post->status = 'active';
+    $post->save();
+
+    // Gửi email thông báo phê duyệt
+    $post->user->notify(new PostApproved($post));
+
+    return redirect()->route('admin.posts.index')->with('success', 'Bài đăng đã được phê duyệt.');
+}
+
+
     
     
     public function showForApproval($post_id)
@@ -197,14 +303,28 @@ public function rejectPost(Request $request, $post_id)
     $post->status = 'rejected';
     $post->save();
 
+    // Hoàn lại 1 lượt đăng bài trong gói dịch vụ của người dùng
+    $packageUser = \DB::table('package_user')
+        ->where('user_id', $post->user_id)
+        ->where('package_id', $post->package_id)
+        ->first();
+
+    if ($packageUser && $packageUser->remaining_posts !== null) {
+        // Tăng thêm 1 lượt đăng bài
+        \DB::table('package_user')
+            ->where('user_id', $post->user_id)
+            ->where('package_id', $post->package_id)
+            ->update(['remaining_posts' => $packageUser->remaining_posts + 1]);
+    }
+
     // Gửi email thông báo từ chối với các lý do
     $post->user->notify(new PostRejected($post, $reasonsString));
 
-    return redirect()->route('admin.posts.index')->with('error', 'Bài đăng đã bị từ chối.');
+    return redirect()->route('admin.posts.index')->with('error', 'Bài đăng đã bị từ chối và lượt đăng đã được hoàn lại.');
 }
 
-    
 
+    
 
 
     // Phương thức hiển thị bài đăng theo xe
@@ -317,9 +437,88 @@ public function rejectPost(Request $request, $post_id)
 }
 
 public function homeindex() {
-    $posts = Post::latest()->take(6)->get();// Lấy các bài post đang active
-    return view('home', compact('posts'));
+    // Lấy các bài post có trạng thái active và sắp xếp mới nhất, giới hạn 6 bài
+    $posts = Post::where('status', 'active')->latest()->take(6)->get();
+
+            // Lấy 6 dòng xe được đăng nhiều nhất
+            $topCars = DB::table('posts')
+            ->join('cars', 'posts.car_id', '=', 'cars.id')
+            ->select('cars.make', 'cars.model', DB::raw('count(posts.id) as total_posts'))
+            ->groupBy('cars.make', 'cars.model')
+            ->orderByDesc('total_posts')
+            ->limit(6)
+            ->get();
+            
+            return view('home', compact('posts', 'topCars'));
+
 }
+
+private function maskPhoneNumber($phone)
+{
+    return substr($phone, 0, 6) . ' ***';
+}
+
+public function showPostsByCar($make, $model)
+{
+    // Lấy các bài đăng theo make và model
+    $posts = Post::whereHas('car', function ($query) use ($make, $model) {
+        $query->where('make', $make)
+              ->where('model', $model);
+    })->where('status', 'active')->paginate(10);
+
+    // Lấy tất cả các hãng xe (makes) để truyền vào view
+    $makes = Car::select('make')->distinct()->pluck('make');
+
+    return view('posts.index', compact('posts', 'make', 'model', 'makes'));
+}
+
+public function edit($id)
+{
+    $post = Post::findOrFail($id);
+    $packages = Package::all(); // Assuming you want to list all available packages
+    return view('admin.posts.edit', compact('post', 'packages'));
+}
+
+public function update(Request $request, $id)
+{
+    $post = Post::findOrFail($id);
+
+    // Xóa dấu chấm khỏi giá và số km để server xử lý chính xác
+    $priceWithoutDots = str_replace('.', '', $request->input('price'));
+    $mileageWithoutDots = str_replace('.', '', $request->input('mileage'));
+
+    // Cập nhật yêu cầu xác nhận dữ liệu
+    $request->merge(['price' => $priceWithoutDots, 'mileage' => $mileageWithoutDots]);
+
+    $request->validate([
+        'price' => 'required|numeric',
+        'description' => 'required|string',
+        'mileage' => 'required|integer',
+        'year' => 'required|integer|min:1886|max:' . date('Y'),
+        'status' => 'required|in:pending,active,rejected,expired', // Đảm bảo giá trị status hợp lệ
+    ]);
+    
+    // Cập nhật giá trị vào cơ sở dữ liệu
+    $post->price = $priceWithoutDots;
+    $post->description = $request->input('description');
+    $post->mileage = $mileageWithoutDots;
+    $post->year = $request->input('year');
+    $post->status = $request->input('status'); // Cập nhật trạng thái
+    
+    $post->save();
+    
+
+    return redirect()->route('admin.posts.index')->with('success', 'Bài đăng đã được cập nhật thành công.');
+}
+
+public function destroy($id)
+{
+    $post = Post::findOrFail($id);
+    $post->delete();
+
+    return redirect()->route('admin.posts.index')->with('success', 'Bài đăng đã được xóa.');
+}
+
 
 
 }

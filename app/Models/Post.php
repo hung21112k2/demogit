@@ -3,6 +3,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\PendingCar;
+
 
 class Post extends Model
 {
@@ -47,5 +49,11 @@ public function photos()
 {
     return $this->hasMany(Photo::class, 'post_id');
 }
+
+public function pendingCar()
+{
+    return $this->hasOne(PendingCar::class, 'post_id');
+}
+
 }
 

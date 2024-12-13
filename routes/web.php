@@ -69,7 +69,9 @@ Route::get('/cars', [CarController::class, 'index'])->name('cars.index');
 
 Route::get('/posts/car/{car_id}', [PostController::class, 'showByCar'])->name('posts.byCar');
 
-Route::get('/search', [App\Http\Controllers\CarController::class, 'search'])->name('search');
+
+Route::get('/search', [CarController::class, 'search'])->name('search');
+
 
 Route::get('/email/verify-notice', function () {
     return view('auth.verify-notice');
@@ -105,10 +107,32 @@ Route::get('/posts/{id}', [PostController::class, 'show'])->name('posts.show');
 
 Route::get('/admin/users', [AdminController::class, 'showUsers'])->name('admin.users');
 
-Route::get('/admin/cars', [CarController::class, 'index'])->name('admin.cars');
+// Hiển thị danh sách xe
 
-// Route cho quản lý xe
-Route::resource('cars', CarController::class)->middleware('auth');
+Route::get('/admin/cars', [CarController::class, 'index'])->name('admin.cars.index');
+
+
+// Hiển thị form tạo xe mới (GET)
+Route::get('/admin/cars/create', [CarController::class, 'create'])->name('cars.create');
+
+
+// Lưu xe mới vào cơ sở dữ liệu (POST)
+Route::post('/admin/cars', [CarController::class, 'store'])->name('cars.store');
+
+
+
+// Hiển thị form chỉnh sửa xe (cần truyền ID của xe)
+Route::get('/admin/cars/{car}/edit', [CarController::class, 'edit'])->name('cars.edit');
+
+// Cập nhật thông tin xe (sử dụng phương thức PUT và cần truyền ID của xe)
+Route::put('/admin/cars/{car}', [CarController::class, 'update'])->name('cars.update');
+
+// Xóa xe (sử dụng phương thức DELETE và cần truyền ID của xe)
+Route::delete('/admin/cars/{car}', [CarController::class, 'destroy'])->name('cars.destroy');
+
+
+
+
 
 Route::get('/admin/posts', [PostController::class, 'index'])->name('admin.posts');
 
@@ -118,6 +142,7 @@ Route::post('/admin/packages', [PackageController::class, 'store'])->name('admin
 Route::get('/admin/packages/{package}/edit', [PackageController::class, 'edit'])->name('admin.packages.edit');
 Route::put('/admin/packages/{package}', [PackageController::class, 'update'])->name('admin.packages.update');
 Route::delete('/admin/packages/{package}', [PackageController::class, 'destroy'])->name('admin.packages.destroy');
+
 
 
 
@@ -146,6 +171,11 @@ Route::get('/transactions', [TransactionController::class, 'index'])->name('tran
 Route::post('/packages/purchase', [PackageController::class, 'purchase'])->name('packages.purchase');
 Route::get('/packages/purchase', [PackageController::class, 'showPurchasePage'])->name('packages.purchase');
 
+Route::post('/packages/buy', [PackageController::class, 'purchase'])->name('packages.buy');
+
+
+
+
 
 Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/posts', [PostController::class, 'index'])->name('admin.posts.index');
@@ -155,6 +185,20 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 Route::post('/admin/posts/{post}/reject', [PostController::class, 'rejectPost'])->name('admin.posts.reject');
 
 });
+
+Route::get('/no-results', function () {
+    return view('no-results');
+})->name('noResults');
+
+
+// Route để hiển thị bài đăng theo hãng và mẫu xe
+Route::get('/cars/{make}/{model}', [PostController::class, 'showPostsByCar'])->name('posts.byCar');
+
+
+Route::get('/admin/posts/{post}/edit', [PostController::class, 'edit'])->name('admin.posts.edit');
+Route::put('/admin/posts/{post}', [PostController::class, 'update'])->name('admin.posts.update');
+Route::delete('/admin/posts/{post}', [PostController::class, 'destroy'])->name('admin.posts.destroy');
+
 
 
 

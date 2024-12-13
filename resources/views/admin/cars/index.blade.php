@@ -1,78 +1,15 @@
 @extends('layouts.admin')
 
-@section('title', 'Quản lý Sản phẩm')
+@section('title', 'Quản lý Xe')
 
 @section('content')
-<style>
-    /* Căn chỉnh các nút và bảng trong admin-content */
-.container {
-    width: 80%;
-    margin: 0 auto;
-}
-
-.table {
-    background-color: #ffffff;
-    width: 100%;
-    margin-bottom: 1rem;
-    border-collapse: collapse;
-}
-
-.table thead {
-    background-color: #228dff;
-    color: white;
-}
-
-.table th, .table td {
-    padding: 12px;
-    text-align: center;
-    border: 1px solid #dddddd;
-}
-
-.table img {
-    max-width: 100px;
-    height: auto;
-}
-
-.btn-primary, .btn-warning, .btn-danger {
-    color: white;
-    padding: 8px 12px;
-    text-decoration: none;
-    border-radius: 5px;
-    margin-right: 5px;
-}
-
-.btn-primary {
-    background-color: #228dff;
-}
-
-.btn-warning {
-    background-color: #ffc107;
-}
-
-.btn-danger {
-    background-color: #dc3545;
-}
-
-/* Thêm hover cho nút */
-.btn-primary:hover {
-    background-color: #1a6bcc;
-}
-
-.btn-warning:hover {
-    background-color: #e0a800;
-}
-
-.btn-danger:hover {
-    background-color: #c82333;
-}
-    </style>
 <div class="container mt-5">
-    <h1 class="text-center mb-4">Danh sách Sản phẩm (Xe)</h1>
+    <h1 class="text-center mb-4">Danh sách Xe</h1>
 
-    <!-- Nút thêm xe mới -->
+    <!-- Nút thêm xe mới (chỉ admin mới thấy) -->
     <a href="{{ route('cars.create') }}" class="btn btn-primary mb-3">Thêm xe mới</a>
 
-    <table class="table table-bordered">
+    <table class="table table-bordered table-hover table-striped shadow-sm">
         <thead class="thead-dark">
             <tr>
                 <th>ID</th>
@@ -88,12 +25,13 @@
                 <td>{{ $car->id }}</td>
                 <td>{{ $car->make }}</td>
                 <td>{{ $car->model }}</td>
-                <td><img src="{{ asset($car->image) }}" alt="{{ $car->make }}" style="max-width: 100px;"></td>
                 <td>
-                    <!-- Nút sửa xe -->
+                    <!-- Hiển thị ảnh của xe từ public/images -->
+                    <img src="{{ asset($car->image_url) }}" alt="{{ $car->make }}" class="img-fluid img-thumbnail" width="150">
+                </td>
+                <td>
+                    <!-- Nút sửa và xóa xe -->
                     <a href="{{ route('cars.edit', $car->id) }}" class="btn btn-sm btn-warning">Sửa</a>
-
-                    <!-- Nút xóa xe -->
                     <form action="{{ route('cars.destroy', $car->id) }}" method="POST" style="display:inline-block;">
                         @csrf
                         @method('DELETE')
@@ -105,4 +43,27 @@
         </tbody>
     </table>
 </div>
+
+<!-- CSS tùy chỉnh -->
+<style>
+    .container {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .table th, .table td {
+        vertical-align: middle;
+        text-align: center;
+    }
+    .table img {
+        transition: transform 0.2s ease;
+    }
+    .table img:hover {
+        transform: scale(1.1);
+    }
+    .btn {
+        border-radius: 20px;
+    }
+</style>
 @endsection

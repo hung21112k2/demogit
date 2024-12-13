@@ -1,6 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.loginapp')
 
-@section('title', 'Danh sách Xe Cũ')
+@section('title', 'Các mẫu xe')
 
 @section('content')
 <style>
@@ -12,80 +12,86 @@
 h1 {
     text-align: center;
     margin-bottom: 40px;
-    font-size: 2.5em;
+    font-size: 3em;
     color: #333;
+    font-family: 'Poppins', sans-serif; /* Font chữ đẹp hơn */
 }
 
-.table {
-    width: 100%;
-    border-collapse: collapse;
+/* CSS cho danh sách xe */
+.car-listing {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.table th, .table td {
+.car-card {
+    display: flex;
+    border: 1px solid #e0e0e0;
     padding: 15px;
-    text-align: left;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    align-items: center; /* Căn giữa hình ảnh và text theo chiều dọc */
 }
 
-.table thead th {
-    background-color: #333;
-    color: white;
-}
-
-.table tbody tr:hover {
-    background-color: #f5f5f5;
-}
-
-.table tbody tr a {
-    color: #007bff;
-    text-decoration: none;
-}
-
-.table tbody tr a:hover {
-    text-decoration: underline;
-}
-
-.car-image {
-    width: 100px;
+.car-card img {
+    width: 200px; /* Phóng to hình ảnh */
     height: auto;
+    object-fit: cover;
+    margin-right: 20px; /* Tạo khoảng cách giữa hình ảnh và nội dung */
+}
+
+.car-card-info {
+    flex-grow: 1;
+    text-align: left; /* Căn nội dung bên trái */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Căn giữa theo chiều dọc */
+}
+
+.car-card-info h5 {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+    color: #f44336; /* Chữ màu đỏ */
+    font-weight: bold;
+    font-family: 'Poppins', sans-serif; /* Font chữ đẹp hơn */
+}
+
+/* Tăng cường màu sắc khi hover vào card */
+.car-card:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.car-card a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.car-card a:hover h5 {
+    color: #d32f2f; /* Màu đậm hơn khi hover */
 }
 </style>
 
 <div class="container mt-5">
-    <h1 class="text-center mb-4">Danh sách Xe Cũ</h1>
+    <h1 class="text-center mb-4">Các mẫu xe </h1>
 
     @if($cars->isEmpty())
         <div class="alert alert-warning text-center" role="alert">
             Chưa có xe cũ nào.
         </div>
     @else
-        <table class="table table-bordered table-hover">
-            <thead class="thead-dark">
-                <tr>
-                    <th scope="col">Hình ảnh</th> <!-- Thêm cột hình ảnh -->
-                    <th scope="col">Hãng xe</th>
-                    <th scope="col">Mẫu xe</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($cars as $car)
-                    <tr>
-                        <td>
-                            @if($car->image)
-                                <img src="{{ asset($car->image) }}" alt="{{ $car->make }}" class="car-image">
-                            @else
-                                <span>Chưa có hình ảnh</span>
-                            @endif
-                        </td>
-                        <td>
-                            <a href="{{ route('posts.byCar', ['car_id' => $car->id]) }}">
-                                {{ $car->make }}
-                            </a>
-                        </td>
-                        <td>{{ $car->model }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+        <div class="car-listing">
+            @foreach($cars as $car)
+                <div class="car-card">
+                    <!-- Sử dụng image_url để hiển thị ảnh -->
+                    <img src="{{ asset($car->image_url) }}" alt="{{ $car->make }} {{ $car->model }}">
+                    <div class="car-card-info">
+                        <a href="{{ route('posts.byCar', ['make' => $car->make, 'model' => $car->model]) }}">
+                            <h5>{{ $car->make }} - {{ $car->model }}</h5>
+                        </a>
+                    </div>
+                </div>
+            @endforeach
+        </div>
     @endif
 </div>
 @endsection

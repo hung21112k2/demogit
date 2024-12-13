@@ -5,128 +5,133 @@
 @section('content')
 <style>
     /* CSS cho phần đăng nhập */
-    .login-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background-color: #FFFFFF;
-    }
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #F5F5F5;
+    
+}
 
-    .login-card {
-        background-color: white;
-        border-radius: 10px;
-        padding: 30px;
-        width: 100%;
-        max-width: 600px; /* Tăng kích thước chiều rộng */
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    }
+.login-card {
+    background-color: white;
+    border-radius: 10px;
+    padding: 30px;
+    width: 100%;
+    max-width: 600px; /* Tăng kích thước chiều rộng */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
 
-    .login-header {
-        text-align: center;
-        margin-bottom: 20px;
-    }
+.login-header {
+    text-align: center;
+    margin-bottom: 20px;
+    
+}
 
-    .login-header h3 {
-        font-weight: bold;
-        font-size: 1.8em; /* Tăng kích thước chữ của tiêu đề */
-    }
+.login-header h3 {
+    font-weight: bold;
+    font-size: 1.8em; /* Tăng kích thước chữ của tiêu đề */
+}
 
-    .login-form input[type="email"],
-    .login-form input[type="password"] {
-        width: 100%;
-        padding: 15px; /* Tăng kích thước padding cho input */
-        margin-bottom: 15px; /* Tăng khoảng cách giữa các input */
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        font-size: 1.2em; /* Tăng kích thước font của input */
-    }
+.login-form input[type="email"],
+.login-form input[type="password"] {
+    width: 100%;
+    padding: 15px; /* Tăng kích thước padding cho input */
+    margin-bottom: 15px; /* Tăng khoảng cách giữa các input */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1.2em; /* Tăng kích thước font của input */
+}
 
-    .login-form input[type="checkbox"] {
-        margin-right: 10px;
-    }
+.login-form input[type="checkbox"] {
+    margin-right: 10px;
+}
 
-    .btn-login {
-        background-color: #f44336;
-        color: white;
-        width: 100%;
-        padding: 15px; /* Tăng kích thước padding cho nút */
-        border: none;
-        border-radius: 5px;
-        font-size: 1.2em; /* Tăng kích thước chữ của nút */
-    }
+.btn-login {
+    background-color: #f44336;
+    color: white;
+    width: 100%;
+    padding: 15px; /* Tăng kích thước padding cho nút */
+    border: none;
+    border-radius: 5px;
+    font-size: 1.2em; /* Tăng kích thước chữ của nút */
+}
 
-    .btn-login:hover {
-        background-color: #d32f2f;
-    }
+.btn-login:hover {
+    background-color: #d32f2f;
+}
 
-    .text-center {
-        text-align: center;
-    }
+.text-center {
+    text-align: center;
+}
 
-    .login-footer {
-        margin-top: 20px;
-        font-size: 1em;
-    }
+.login-footer {
+    margin-top: 20px;
+    font-size: 1em;
+}
 
-    .login-footer a {
-        color: #f44336;
-        text-decoration: none;
-    }
+.login-footer a {
+    color: #f44336;
+    text-decoration: none;
+}
 
-    .login-footer a:hover {
-        text-decoration: underline;
-    }
+.login-footer a:hover {
+    text-decoration: underline;
+}
 
-    .form-group {
-        margin-bottom: 20px;
-    }
+.form-group {
+    margin-bottom: 20px;
+}
 
-    .input-icon {
-        position: relative;
-    }
+.input-icon {
+    position: relative;
+}
 
-    .input-icon input {
-        padding-left: 40px;
-    }
+.input-icon input {
+    padding-left: 40px;
+}
 
-    .input-icon i {
-        position: absolute;
-        left: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 1.2em;
-        color: #888;
-    }
+.input-icon i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2em;
+    color: #888;
+}
 
-    .form-check-label {
-        font-size: 1em; /* Tăng kích thước chữ của phần nhớ tài khoản */
-    }
+.form-check-label {
+    font-size: 1em; /* Tăng kích thước chữ của phần nhớ tài khoản */
+}
 
-    /* Quên mật khẩu */
-    .forgot-password {
-        float: right;
-        font-size: 1em; /* Tăng kích thước chữ của quên mật khẩu */
-        margin-top: 10px;
-    }
+/* Quên mật khẩu */
+.forgot-password {
+    float: right;
+    font-size: 1em; /* Tăng kích thước chữ của quên mật khẩu */
+    margin-top: 10px;
+}
 
-    .forgot-password a {
-        color: #f44336;
-        text-decoration: none;
-    }
+.forgot-password a {
+    color: #f44336;
+    text-decoration: none;
+}
 
-    .forgot-password a:hover {
-        text-decoration: underline;
-    }
+.forgot-password a:hover {
+    text-decoration: underline;
+}
 
-    /* Close button */
-    .close-button {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        font-size: 1.5em;
-        cursor: pointer;
-    }
+/* Đăng nhập dành cho Admin */
+.admin-login {
+    font-size: 1em; /* Tăng kích thước chữ */
+    color: #f44336;
+    text-decoration: none;
+}
+
+.admin-login:hover {
+    text-decoration: underline;
+}
+
 </style>
 
 <div class="login-container">
@@ -173,13 +178,12 @@
         </div>
 
         <div class="login-footer text-center">
-            <p>Chưa có tài khoản? <a href="{{ route('register') }}">Đăng ký ngay</a></p>
-            <p><a href="{{ route('admin.login') }}">Đăng nhập dành cho Admin</a></p>
-        </div>
+    <p>Chưa có tài khoản? <a href="{{ route('register') }}">Đăng ký ngay</a></p>
+    <p><a href="{{ route('admin.login') }}" class="admin-login">Đăng nhập dành cho Admin</a></p>
+</div>
 
-        <div class="close-button">
-            <a href="#">✕</a>
-        </div>
+
+
     </div>
 </div>
 @endsection
